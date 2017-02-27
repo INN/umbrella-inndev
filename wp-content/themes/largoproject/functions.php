@@ -6,7 +6,8 @@ define( 'LARGOPROJECT_RESOURCES_PARENT_ID', 108447);
 function largo_child_require_files() {
 	$includes = array(
 		'/homepages/homepage.php',
-		'/inc/resource-page.php'
+		'/inc/resource-page.php',
+		'/inc/helpscout.php'
 	);
 	foreach ( $includes as $include ) {
 		require_once( get_stylesheet_directory() . $include );
