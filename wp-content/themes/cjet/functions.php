@@ -54,7 +54,7 @@ add_action( 'init', 'cjet_init' );
 function cjet_theme_options( $options ) {
 
 	$options[] = array(
-		'name' 	=> __('CJET', 'cjet'),
+		'name' 	=> __('INN Learn', 'cjet'),
 		'type' 	=> 'heading');
 
 	$options[] = array(

@@ -3,8 +3,8 @@
 include_once get_template_directory() . '/homepages/homepage-class.php';
 
 class CJETHomepageLayout extends Homepage {
-	var $name = 'CJET/Newstraining.org Homepage Layout';
-	var $description = 'Custom homepage layout for Newstraining.org.';
+	var $name = 'learn.inn.org Homepage Layout';
+	var $description = 'Custom homepage layout for learn.inn.org.';
 
 	function __construct( $options=array() ) {
 		$defaults = array(
