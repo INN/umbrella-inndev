@@ -1,6 +1,6 @@
 # Explanation of themes:
 
-- cjet: learn.inn.org (formerly Community Journalism Executive Training)
+- cjet: learn.inn.org
 - impaq: impaq.inn.org, site no longer active but still online
 - **inn**: submodule at [INN/inn](https://github.com/INN/inn) for inn.org; has common stylesheets imported by these child themes
 - journobiz: innovation.inn.org
