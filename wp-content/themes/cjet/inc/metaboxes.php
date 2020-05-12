@@ -123,3 +123,53 @@ function cjet_content_date_metabox() {
 }
 
 largo_register_meta_input( 'cjet_content_date' );
+
+/**
+ * Adds metabox to allow pages/posts to be hidden behind cookies
+ */
+largo_add_meta_box(
+	'cjet_content_restrict_access_metabox',
+	__('Restrict Access', 'cjet'),
+	'cjet_content_restrict_access_metabox',
+	array( 'page', 'post' )
+);
+
+function cjet_content_restrict_access_metabox() {
+
+	global $post;
+
+	$values = get_post_custom( $post->ID );
+	$checked = isset($values["cjet-content-restrict-access"][0]) ? 'checked="checked" ' : '';
+	wp_nonce_field( 'largo_meta_box_nonce', 'meta_box_nonce' );
+	?>
+	
+	<p>Should this <?php echo get_post_type( $post->ID ); ?> be hidden behind a cookie?</p>
+	<input type="checkbox" name="cjet-content-restrict-access" <?php echo $checked; ?>/>
+	<?php
+
+}
+
+/**
+ * Largo metabox API doesn't yet support checkboxes as an input type
+ * so we need a special function to save this checkbox field for restricting content (for now)
+ * 
+ * @param int $post_ID The ID of the post we're saving to
+ * 
+ * @return int $post_ID The ID of the post we're saving to
+ */
+function save_content_restriction_checkbox( $post_ID = 0 ) {
+
+	$post_ID = (int) $post_ID;
+	$post_type = get_post_type( $post_ID );
+	$post_status = get_post_status( $post_ID );
+
+	if ( $post_type && isset( $_POST['cjet-content-restrict-access'] ) && $_POST['cjet-content-restrict-access'] == 'on' ) {
+		update_post_meta( $post_ID, 'cjet-content-restrict-access', 'false' );
+	} else {
+		delete_post_meta( $post_ID, 'cjet-content-restrict-access' );
+	}
+
+	return $post_ID;
+
+}
+add_action( 'save_post', 'save_content_restriction_checkbox' );

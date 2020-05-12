@@ -113,3 +113,139 @@ function load_dashicons_front_end() {
 	
 }
 add_action( 'wp_enqueue_scripts', 'load_dashicons_front_end' );
+
+/**
+ * Set a user cookie to grant access to specific pages when a specific form
+ * is submitted through Gravity Forms.
+ * 
+ * @param Obj $entry The form entry that was just submitted
+ * @param Obj $form The current form
+ */
+function set_cookie_on_form_submission( $entry, $form ) {
+
+	// uncomment to review the entry
+    // echo "<pre>".print_r(￼$entry,true)."</pre>"; die;
+
+	// loop through $form fields to find field with access_ID as its label
+	foreach( $form['fields'] as $field ) {
+
+		if( 'access_ID' == $field->label ) {
+
+			$access_ID_field_ID = $field->id;
+
+		}
+		
+	}
+
+	// if an access_ID field is found, use its value for $from_page and set the cookie
+	if( $access_ID_field_ID ) {
+
+		$from_page = $entry[$access_ID_field_ID];
+
+		// make sure $from_page is a valid post id before setting the cookie
+		if( is_string( $from_page ) && get_post_status( $from_page ) ) {
+
+			// set the cookie
+			setcookie( 'unrestrict_'.$from_page, 1, strtotime( '+365 days' ), COOKIEPATH, COOKIE_DOMAIN, false, false);
+
+			// redirect so we dont land on gravity forms "thank you" page
+			wp_redirect( get_permalink( $from_page ) );
+
+		}
+
+	}
+
+}
+add_action( 'gform_after_submission', 'set_cookie_on_form_submission', 10, 2 );
+
+/**
+ * Grant access to pages that should be restricted
+ * based on if a cookie is set that matches the specific post ID
+ * 
+ * If cookie is not set, try and find a form with a name identical to the current page
+ * and display it if found.
+ * 
+ * @param Str $content The entire post content
+ * 
+ * @return Str $content The entire post content
+ */
+function restrict_access_to_pages_by_cookie( $content ) {
+
+	global $post;
+
+	// see if current post/page is supposed to be restricted
+	$restrict_access = get_post_meta( $post->ID, 'cjet-content-restrict-access' )[0];
+
+	// go ahead andd display if not supposed to be restricted
+	if( ! $restrict_access || $restrict_access === 0 || is_user_logged_in() ) {
+
+		return $content;
+
+	}
+
+    // check if user has submitted this pages form, if not, show only form
+    if( ! isset( $_COOKIE['unrestrict_'.get_the_ID()] ) ) {
+
+		// but wait, what if this is a child page?
+		// we need to see if a cookie has been set to grant access to the parent page
+		// first, grab the top-level parent of this page
+		if( $post->post_parent ) {
+
+			$ancestors = get_post_ancestors( $post->ID );
+			$root = count( $ancestors ) - 1;
+			$parent = $ancestors[$root];
+
+		} else {
+
+			$parent = $post->ID;
+
+		}
+
+		// if an actual parent was found (parent id doesn't match current post id),
+		// let's see if a cookie for it (parent) exists
+		if( $parent != $post->ID ) {
+
+			// if a cookie is found, let's display the content
+			if( isset( $_COOKIE['unrestrict_'.$parent] ) ) {
+
+				return $content;
+			
+			// else if no cookie is found, let's redirect the user to the top-level parent 
+			// so they can fill out the form
+			} else {
+
+				wp_redirect( get_permalink( $parent ) );
+
+			}
+
+		}
+
+		// make sure the GF methods exist before we try using them
+		// that way we don't see any scary 500 errors
+		if( method_exists( 'RGFormsModel', 'get_form_id' ) && method_exists( 'RGForms', 'get_form' ) ) {
+
+			// try and find a form that matches the current post title
+			$form = RGFormsModel::get_form_id( $post->post_title );
+			
+			// if a form is found with a matching name, show it to the user
+			if( $form ) {
+
+				$form = RGForms::get_form( $form );
+				return '<h4>'.__( 'The content on this '.$post->post_type.' is restricted. Please fill out the form below to gain access.', 'cjet' ).'</h4>'.$form;
+
+			}
+
+		}
+
+		return '<h4>'.__( 'The content on this '.$post->post_type.' is restricted.', 'cjet' ).'</h4>';
+		
+    } else {
+
+        // user has submitted this pages form in the last 365 days
+        // show content
+		return $content;
+		
+	}
+	
+}
+add_action( 'the_content', 'restrict_access_to_pages_by_cookie' ); 
