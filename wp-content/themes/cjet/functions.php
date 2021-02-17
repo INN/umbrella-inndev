@@ -8,7 +8,6 @@ $includes = array(
 	'/inc/metaboxes.php',
 	'/inc/attachments.php',
 	'/inc/sidebars.php',
-	'/lib/file-un-attach/file-unattach.php',
 	'/homepages/homepage.php'
 );
 foreach ( $includes as $include ) {
